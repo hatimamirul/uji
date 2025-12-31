@@ -2,7 +2,7 @@ import { useState } from "react";
 import Head from "next/head";
 
 export default function Home() {
-  const [image, setImage] = useState("");
+  const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -10,10 +10,12 @@ export default function Home() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    setImage("");
+    setImages([]);
 
     const formData = new FormData();
-    formData.append("file", e.target.file.files[0]);
+    for (const file of e.target.file.files) {
+      formData.append("file", file);
+    }
 
     try {
       const res = await fetch("/api/upload", {
@@ -24,7 +26,7 @@ export default function Home() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error);
 
-      setImage(data.url);
+      setImages(data.urls);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -35,15 +37,15 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>Upload Gambar Cloudinary</title>
+        <title>Multiple Upload Cloudinary</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <div style={{ padding: 40 }}>
-        <h1>Upload Gambar</h1>
+        <h1>Upload Banyak Gambar</h1>
 
         <form onSubmit={upload}>
-          <input type="file" name="file" required />
+          <input type="file" name="file" multiple required />
           <br /><br />
           <button disabled={loading}>
             {loading ? "Uploading..." : "Upload"}
@@ -52,10 +54,20 @@ export default function Home() {
 
         {error && <p style={{ color: "red" }}>{error}</p>}
 
-        {image && (
+        {images.length > 0 && (
           <>
-            <p>Hasil:</p>
-            <img src={image} width="300" />
+            <h3>Hasil Upload:</h3>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+                gap: 10
+              }}
+            >
+              {images.map((img, i) => (
+                <img key={i} src={img} style={{ width: "100%" }} />
+              ))}
+            </div>
           </>
         )}
       </div>
